@@ -1,0 +1,30 @@
+---
+Servers:
+  - server1.example.com
+  - server2.example.com
+  - server3.example.com
+MinWeights:
+  - 10
+  - 20
+  - 30
+MaxWeights:
+  - 40
+  - 50
+  - 60
+LimitCoeffs:
+  - 10
+  - 10
+  - 10
+Coeffs:
+  cpu: 0.5
+  mem: 0.2
+  sto: 0.1
+  net: 0.2
+C: 10
+SampleIntervals: 5
+CycleIntervals: 10
+Algorithm: simple_sort
+PrometheusQueryEndpoint: http://demo.robustperception.io:9090/api/v1/query
+OutputFile: ./nginx.conf
+Verbose: False
+...

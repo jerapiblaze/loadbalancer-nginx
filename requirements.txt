@@ -1,0 +1,17 @@
+Brotli==1.1.0
+certifi==2024.2.2
+charset-normalizer==3.3.2
+idna==3.7
+joblib==1.4.0
+numpy==1.26.4
+pip==24.0
+PySocks==1.7.1
+PyYAML==6.0.1
+requests==2.31.0
+scikit-learn==1.4.2
+scipy==1.13.0
+setuptools==69.5.1
+threadpoolctl==3.4.0
+urllib3==2.2.1
+wheel==0.43.0
+win-inet-pton==1.1.0
