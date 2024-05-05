@@ -1,0 +1,140 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: simpleapp-nginx-config-j12t
+  namespace: j12t-test
+data:
+  prod.yaml: |
+    Servers:
+      - simpleapp-0.simpleapp-server.j12t.svc.cluster.local:8888
+      - simpleapp-1.simpleapp-server.j12t.svc.cluster.local:8888
+      - simpleapp-2.simpleapp-server.j12t.svc.cluster.local:8888
+    MinWeights:
+      - 10
+      - 10
+      - 10
+    MaxWeights:
+      - 100
+      - 100
+      - 100
+    LimitCoeffs:
+      - 1
+      - 1
+      - 1
+    Coeffs:
+      cpu: 0.5
+      mem: 0.5
+      sto: 0
+      net: 0
+    C: 100
+    SampleIntervals: 5
+    CycleIntervals: 60
+    Algorithm: dynamicsmooth_weighted_roundrobin
+    PrometheusQueryEndpoint: http://prometheus-0.prometheus.j12t-monitoring.svc.cluster.local:9090/api/v1/query
+    OutputFile: /etc/nginx/conf.d/default.conf
+    Verbose: True
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telegraf-pods-config-j12t
+  namespace: j12t-test
+data:
+  telegraf.conf: |
+    [agent]
+      interval = "10s"
+      round_interval = true
+      metric_batch_size = 1000
+      metric_buffer_limit = 10000
+      collection_jitter = "0s"
+      flush_interval = "10s"
+      flush_jitter = "0s"
+      precision = ""
+      hostname = ""
+      omit_hostname = true
+      logtarget = "file"
+      logfile = "/tmp/telegraf.log"
+    [[outputs.prometheus_client]]
+      listen = ":9126"
+      path = "/metrics"
+    [[outputs.file]]
+      files = ["/tmp/telegraf_stats.txt"]
+      data_format = "wavefront"
+      rotation_max_size = "5MB"
+    [[inputs.mem]]
+    [[inputs.cpu]]
+    [[inputs.net]]
+    [[inputs.diskio]]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: simpleapp-nginx
+  namespace: j12t-test
+  labels:
+    app: simpleapp-nginx
+spec:
+  type: NodePort
+  selector:
+    app: simpleapp-nginx
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      name: nginx
+    - port: 9126
+      name: telegraf
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: simpleapp-nginx
+  namespace: j12t-test
+spec:
+  selector:
+    matchLabels:
+      app: simpleapp-nginx # has to match .spec.template.metadata.labels
+  serviceName: simpleapp-nginx # has to match headless Service metadata.name
+  replicas: 1 # by default is 1
+  template:
+    metadata:
+      labels:
+        app: simpleapp-nginx # has to match .spec.selector.matchLabels
+    spec:
+      terminationGracePeriodSeconds: 10
+      volumes:
+        - name: simpleapp-nginx-config-j12t
+          configMap:
+            name: simpleapp-nginx-config-j12t
+            defaultMode: 420
+        - name: ephemeral
+          emptyDir:
+            sizeLimit: "50M"
+        - name: telegraf-pods-config-j12t
+          configMap:
+            name: telegraf-pods-config-j12t
+            defaultMode: 420
+      containers:
+      - name: simpleapp-nginx
+        image: jerapiblannett/loadbalancer-nginx:beta
+        volumeMounts:
+          - name: simpleapp-nginx-config-j12t
+            mountPath: /etc/loadbalancer-nginx/config
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+      - name: telegraf-agent
+        image: telegraf:1.20
+        ports:
+        - containerPort: 9126
+        resources:
+          requests:
+            ephemeral-storage: "50M"
+          limits:
+            ephemeral-storage: "50M"
+        volumeMounts:
+        - name: ephemeral
+          mountPath: "/tmp"
+        - name: telegraf-pods-config-j12t
+          mountPath: "/etc/telegraf"

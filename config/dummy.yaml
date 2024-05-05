@@ -12,19 +12,19 @@ MaxWeights:
   - 50
   - 60
 LimitCoeffs:
-  - 10
-  - 10
-  - 10
+  - 1
+  - 1
+  - 1
 Coeffs:
   cpu: 0.5
   mem: 0.2
   sto: 0.1
   net: 0.2
-C: 10
+C: 100
 SampleIntervals: 5
 CycleIntervals: 10
-Algorithm: simple_sort
+Algorithm: dynamicsmooth_weighted_roundrobin
 PrometheusQueryEndpoint: http://demo.robustperception.io:9090/api/v1/query
-OutputFile: ./nginx.conf
+OutputFile: ./default.conf
 Verbose: False
 ...

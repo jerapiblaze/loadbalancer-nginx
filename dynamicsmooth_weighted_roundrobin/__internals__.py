@@ -65,5 +65,4 @@ class DSWRR:
             if dw > maxWeight:
                 dw = maxWeight
             DW_dynamic_weight[server_name] = dw
-        print(DW_dynamic_weight)
         return DW_dynamic_weight
