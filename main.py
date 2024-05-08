@@ -52,6 +52,7 @@ match config.Algorithm:
         raise Exception("Not implemented!")
 
 CALCULATOR = Algo(config)
+prev_weight = None
 try:
     while True:
         logger.info("Starting new config round.")
@@ -60,6 +61,10 @@ try:
             servers=config.Servers
         )
         weights = CALCULATOR.Calc(metrics)
+        if prev_weight == weights:
+            logger.info("No changes in weights.")
+            time.sleep(config.CycleIntervals)
+            continue
         WriteConfig(
             server_weights=weights,
             path=config.OutputFile
@@ -69,6 +74,7 @@ try:
             logger.info(weights)
         cmd = "nginx -s reload"
         logger.info(f"Reloading NGINX config with command: {cmd}")
+        prev_weight = weights
         os.system(cmd)
         time.sleep(config.CycleIntervals)
 except KeyboardInterrupt:
