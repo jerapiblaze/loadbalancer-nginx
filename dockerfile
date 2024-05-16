@@ -13,6 +13,8 @@ RUN ./.python/bin/pip install -r requirements.txt
 RUN mkdir /etc/loadbalancer-nginx
 RUN mkdir /etc/loadbalancer-nginx/config
 RUN rm -f /etc/nginx/sites-enabled/*
+RUN sed -i -e "s/worker_connections 768;/worker_connections 10000;/g" /etc/nginx/nginx.conf
+RUN sed -i -e "s/# multi_accept on;/multi_accept on;/g" /etc/nginx/nginx.conf
 
 FROM build
 
